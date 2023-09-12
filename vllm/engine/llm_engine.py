@@ -517,6 +517,7 @@ class LLMEngine:
         unfinished_scheduled_seq_groups: List[RequestOutput] = []
         for seq_group, samples in zip(scheduled_seq_groups, output):
             if not seq_group.is_finished():
+                seq_group.is_executing = False
                 self._process_sequence_group_samples(seq_group, samples)
                 unfinished_scheduled_seq_groups.append(seq_group)
 
