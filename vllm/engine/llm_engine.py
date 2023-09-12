@@ -427,7 +427,7 @@ class LLMEngine:
         all_finished_seqs.sort(key=lambda x: x[0].get_beam_search_score(
             length_penalty=length_penalty,
             eos_token_id=self.tokenizer.eos_token_id),
-                               reverse=True)
+            reverse=True)
         for seq, parent, is_new in all_finished_seqs[:beam_width]:
             if is_new:
                 # A newly generated child sequence finishes and has a high
@@ -455,7 +455,7 @@ class LLMEngine:
         running_child_seqs.sort(key=lambda x: x[0].get_beam_search_score(
             length_penalty=length_penalty,
             eos_token_id=self.tokenizer.eos_token_id),
-                                reverse=True)
+            reverse=True)
 
         # Check if we can stop the beam search.
         if len(running_child_seqs) == 0:
@@ -514,15 +514,18 @@ class LLMEngine:
             scheduler_outputs: SchedulerOutputs) -> List[RequestOutput]:
         # Update the scheduled sequence groups with the model outputs.
         scheduled_seq_groups = scheduler_outputs.scheduled_seq_groups
+        unfinished_scheduled_seq_groups: List[RequestOutput] = []
         for seq_group, samples in zip(scheduled_seq_groups, output):
-            self._process_sequence_group_samples(seq_group, samples)
+            if not seq_group.is_finished():
+                self._process_sequence_group_samples(seq_group, samples)
+                unfinished_scheduled_seq_groups.append(seq_group)
 
         # Free the finished sequence groups.
         self.scheduler.free_finished_seq_groups()
 
         # Create the outputs.
         request_outputs: List[RequestOutput] = []
-        for seq_group in (scheduled_seq_groups +
+        for seq_group in (unfinished_scheduled_seq_groups +
                           scheduler_outputs.ignored_seq_groups):
             request_output = RequestOutput.from_seq_group(seq_group)
             request_outputs.append(request_output)

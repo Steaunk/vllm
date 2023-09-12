@@ -127,10 +127,6 @@ class Scheduler:
         if not self.swapped:
             ignored_seq_groups: List[SequenceGroup] = []
             scheduled: List[SequenceGroup] = []
-            # The total number of sequences on the fly, including the
-            # requests in the generation phase.
-            num_curr_seqs = sum(seq_group.get_max_num_running_seqs()
-                                for seq_group in self.running)
             num_batched_tokens = 0
             # Optimization: We do not sort the waiting queue since the preempted
             # sequence groups are added to the front and the new sequence groups
@@ -161,18 +157,10 @@ class Scheduler:
                         self.scheduler_config.max_num_batched_tokens):
                     break
 
-                # The total number of sequences in the RUNNING state should not
-                # exceed the maximum number of sequences.
-                num_new_seqs = seq_group.get_max_num_running_seqs()
-                if (num_curr_seqs + num_new_seqs >
-                        self.scheduler_config.max_num_seqs):
-                    break
-
                 seq_group = self.waiting.pop(0)
                 self._allocate(seq_group)
                 self.running.append(seq_group)
                 num_batched_tokens += num_prompt_tokens
-                num_curr_seqs += num_new_seqs
                 scheduled.append(seq_group)
 
             if scheduled:
@@ -196,12 +184,23 @@ class Scheduler:
         # Reserve new token slots for the running sequence groups.
         running: List[SequenceGroup] = []
         preempted: List[SequenceGroup] = []
+        # Executing sequence groups in this step.
+        executing: List[SequenceGroup] = []
+        num_seqs = 0
         while self.running:
             seq_group = self.running.pop(0)
+            num_new_seqs = seq_group.get_max_num_running_seqs()
+            if seq_group.is_executing or (num_seqs + num_new_seqs >
+                                          self.scheduler_config.max_num_seqs):
+                running.append(seq_group)
+                continue
             while not self.block_manager.can_append_slot(seq_group):
                 if self.running:
                     # Preempt the lowest-priority sequence groups.
                     victim_seq_group = self.running.pop(-1)
+                    if victim_seq_group.is_executing:
+                        running.append(victim_seq_group)
+                        continue
                     self._preempt(victim_seq_group, blocks_to_swap_out)
                     preempted.append(victim_seq_group)
                 else:
@@ -214,8 +213,12 @@ class Scheduler:
                 # Append new slots to the sequence group.
                 self._append_slot(seq_group, blocks_to_copy)
                 running.append(seq_group)
+                executing.append(seq_group)
+                seq_group.is_executing = True
+                num_seqs += num_new_seqs
         self.running = running
 
+        assert len(self.swapped) == 0
         # Swap in the sequence groups in the SWAPPED state if possible.
         self.swapped = self.policy.sort_by_priority(now, self.swapped)
         if not preempted:
@@ -246,10 +249,10 @@ class Scheduler:
         # sequences in the RUNNING state.
         num_batched_tokens = sum(
             seq_group.num_seqs(status=SequenceStatus.RUNNING)
-            for seq_group in self.running)
+            for seq_group in executing)
 
         scheduler_outputs = SchedulerOutputs(
-            scheduled_seq_groups=self.running,
+            scheduled_seq_groups=executing,
             prompt_run=False,
             num_batched_tokens=num_batched_tokens,
             blocks_to_swap_in=blocks_to_swap_in,
@@ -338,6 +341,7 @@ class Scheduler:
                 preemption_mode = PreemptionMode.RECOMPUTE
             else:
                 preemption_mode = PreemptionMode.SWAP
+        assert preemption_mode == PreemptionMode.RECOMPUTE
         if preemption_mode == PreemptionMode.RECOMPUTE:
             self._preempt_by_recompute(seq_group)
         elif preemption_mode == PreemptionMode.SWAP:
