@@ -59,9 +59,11 @@ class Scheduler:
         self,
         scheduler_config: SchedulerConfig,
         cache_config: CacheConfig,
+        pipeline_parallel_size: int = 1,
     ) -> None:
         self.scheduler_config = scheduler_config
         self.cache_config = cache_config
+        self.pipeline_parallel_size = pipeline_parallel_size
 
         self.prompt_limit = min(self.scheduler_config.max_model_len,
                                 self.scheduler_config.max_num_batched_tokens)
@@ -127,6 +129,10 @@ class Scheduler:
         if not self.swapped:
             ignored_seq_groups: List[SequenceGroup] = []
             scheduled: List[SequenceGroup] = []
+            # The total number of sequences on the fly, including the
+            # requests in the generation phase.
+            num_curr_seqs = sum(seq_group.get_max_num_running_seqs()
+                                for seq_group in self.running)
             num_batched_tokens = 0
             # Optimization: We do not sort the waiting queue since the preempted
             # sequence groups are added to the front and the new sequence groups
@@ -157,10 +163,19 @@ class Scheduler:
                         self.scheduler_config.max_num_batched_tokens):
                     break
 
+                # The total number of sequences in the RUNNING state should not
+                # exceed the maximum number of sequences.
+                num_new_seqs = seq_group.get_max_num_running_seqs()
+                if (num_curr_seqs + num_new_seqs >
+                        self.scheduler_config.max_num_seqs *
+                        self.pipeline_parallel_size):
+                    break
+
                 seq_group = self.waiting.pop(0)
                 self._allocate(seq_group)
                 self.running.append(seq_group)
                 num_batched_tokens += num_prompt_tokens
+                num_curr_seqs += num_new_seqs
                 scheduled.append(seq_group)
 
             if scheduled:

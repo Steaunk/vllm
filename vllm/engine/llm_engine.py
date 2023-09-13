@@ -78,6 +78,7 @@ class LLMEngine:
             f"dtype={model_config.dtype}, "
             f"download_dir={model_config.download_dir!r}, "
             f"load_format={model_config.load_format}, "
+            f"pipeline_parallel_size={parallel_config.pipeline_parallel_size}, "
             f"tensor_parallel_size={parallel_config.tensor_parallel_size}, "
             f"seed={model_config.seed})")
         # TODO(woosuk): Print more configs in debug mode.
@@ -105,7 +106,8 @@ class LLMEngine:
         self._init_cache()
 
         # Create the scheduler.
-        self.scheduler = Scheduler(scheduler_config, cache_config)
+        self.scheduler = Scheduler(
+            scheduler_config, cache_config, parallel_config.pipeline_parallel_size)
 
         # Logging.
         self.last_logging_time = 0.0
