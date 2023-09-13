@@ -318,7 +318,10 @@ class LlamaForCausalLM(nn.Module):
         for name, loaded_weight in hf_model_weights_iterator(
                 model_name_or_path, cache_dir, load_format):
             # Map the layer id to the current pipeline stage.
-            number = int(re.findall(r"\d+", name)[0])
+            numbers = re.findall(r"\d+", name)
+            if len(numbers) == 0:
+                continue
+            number = int(numbers[0])
             if number < layer_id_begin or number >= layer_id_end:
                 continue
             new_number = number - layer_id_begin
