@@ -300,7 +300,7 @@ class AsyncLLMEngine:
                 request_output, verbose=self.log_requests)
 
     async def run_engine_loop(self):
-        futures = set()
+        futures: Set[asyncio.Future] = set()
         while True:
             if len(futures) == self.max_concurrent_steps:
                 done, _ = await asyncio.wait(
@@ -436,6 +436,7 @@ class AsyncLLMEngine:
                      *engine_configs,
                      distributed_init_method,
                      placement_group,
+                     max_concurrent_steps=engine_args.max_concurrent_steps,
                      log_requests=not engine_args.disable_log_requests,
                      log_stats=not engine_args.disable_log_stats,
                      start_engine_loop=start_engine_loop)

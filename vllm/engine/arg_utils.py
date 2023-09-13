@@ -171,6 +171,7 @@ class AsyncEngineArgs(EngineArgs):
     """Arguments for asynchronous vLLM engine."""
     engine_use_ray: bool = False
     disable_log_requests: bool = False
+    max_concurrent_steps: int = 1
 
     @staticmethod
     def add_cli_args(
@@ -180,6 +181,9 @@ class AsyncEngineArgs(EngineArgs):
                             action='store_true',
                             help='use Ray to start the LLM engine in a '
                             'separate process as the server process.')
+        parser.add_argument('--max-concurrent-steps',
+                            type=int,
+                            default=1)
         parser.add_argument('--disable-log-requests',
                             action='store_true',
                             help='disable logging requests')
