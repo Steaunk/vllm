@@ -106,8 +106,8 @@ class LLMEngine:
         self._init_cache()
 
         # Create the scheduler.
-        self.scheduler = Scheduler(
-            scheduler_config, cache_config, parallel_config.pipeline_parallel_size)
+        self.scheduler = Scheduler(scheduler_config, cache_config,
+                                   parallel_config.pipeline_parallel_size)
 
         # Logging.
         self.last_logging_time = 0.0
