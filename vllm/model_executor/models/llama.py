@@ -319,13 +319,12 @@ class LlamaForCausalLM(nn.Module):
                 model_name_or_path, cache_dir, load_format):
             # Map the layer id to the current pipeline stage.
             numbers = re.findall(r"\d+", name)
-            if len(numbers) == 0:
-                continue
-            number = int(numbers[0])
-            if number < layer_id_begin or number >= layer_id_end:
-                continue
-            new_number = number - layer_id_begin
-            name = re.sub(str(number), str(new_number), name)
+            if len(numbers) > 0:
+                number = int(numbers[0])
+                if number < layer_id_begin or number >= layer_id_end:
+                    continue
+                new_number = number - layer_id_begin
+                name = re.sub(str(number), str(new_number), name)
 
             if "rotary_emb.inv_freq" in name:
                 continue
