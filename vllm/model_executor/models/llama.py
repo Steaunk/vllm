@@ -312,8 +312,9 @@ class LlamaForCausalLM(nn.Module):
         ]
         state_dict = self.state_dict()
 
-        layer_id_begin = self.pp_rank * self.pp_size
-        layer_id_end = (self.pp_rank + 1) * self.pp_size
+        num_layers_per_pp_rank = self.config.num_hidden_layers // self.pp_size
+        layer_id_begin = self.pp_rank * num_layers_per_pp_rank
+        layer_id_end = (self.pp_rank + 1) * num_layers_per_pp_rank
 
         for name, loaded_weight in hf_model_weights_iterator(
                 model_name_or_path, cache_dir, load_format):
