@@ -37,7 +37,7 @@ _MODEL_PP_SUPPORTED = [
 ]
 
 
-def _check_model_supported(model_class):
+def _check_model_supported(model_class) -> None:
     if get_pipeline_model_parallel_world_size() > 1:
         assert model_class in _MODEL_PP_SUPPORTED, \
             f"{model_class} does not support pipeline parallelism."
