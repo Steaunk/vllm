@@ -254,6 +254,7 @@ class LlamaForCausalLM(nn.Module):
         super().__init__()
         self.config = config
         self.model = LlamaModel(config)
+        self.dtype = torch.get_default_dtype()
         self.pp_size = get_pipeline_model_parallel_world_size()
         self.pp_rank = get_pipeline_model_parallel_rank()
         if self.pp_rank == self.pp_size - 1:
@@ -276,8 +277,8 @@ class LlamaForCausalLM(nn.Module):
         if self.pp_rank == 0:
             input_ = input_ids
         else:
-            shape = [input_metadata.num_valid_tokens, self.config.hidden_size]
-            input_ = receive_from_prev_pp_rank(shape)
+            shape = [positions.shape[0], self.config.hidden_size]
+            input_ = receive_from_prev_pp_rank(shape, self.dtype)
         hidden_states = self.model(input_, positions, kv_caches,
                                    input_metadata, cache_events)
         if self.pp_rank == self.pp_size - 1:
