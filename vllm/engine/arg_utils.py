@@ -178,7 +178,8 @@ class AsyncEngineArgs(EngineArgs):
             parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
         parser = EngineArgs.add_cli_args(parser)
         parser.add_argument('--engine-use-ray',
-                            action='store_true',
+                            type=bool,
+                            default=AsyncEngineArgs.engine_use_ray,
                             help='use Ray to start the LLM engine in a '
                             'separate process as the server process.')
         parser.add_argument('--max-concurrent-steps',
