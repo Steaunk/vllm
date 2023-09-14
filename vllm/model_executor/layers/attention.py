@@ -272,13 +272,7 @@ class PagedAttentionWithRoPE(PagedAttention):
         sin = freqs.sin()
         cache = torch.cat((cos, sin), dim=-1)
 
-        # FIXME(woosuk): This assumes that we configure the default dtype when
-        # initializing the model.
-        # TODO(woosuk): Make it more robust.
-        torch_dtype = torch.get_default_dtype()
-        cache = cache.to(torch_dtype)
-        # Embedding size: [max_position, rotary_dim]
-        self.register_buffer("cos_sin_cache", cache, persistent=False)
+        self.cos_sin_cache = cache
 
     def forward(
         self,
