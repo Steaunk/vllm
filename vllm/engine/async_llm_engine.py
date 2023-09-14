@@ -248,7 +248,7 @@ class AsyncLLMEngine:
                  start_engine_loop: bool = True,
                  **kwargs) -> None:
         self.worker_use_ray = worker_use_ray
-        self.engine_use_ray = engine_use_ray
+        assert engine_use_ray is True
         self.max_concurrent_steps = max_concurrent_steps
         self.log_requests = log_requests
         self.engine = self._init_engine(*args, **kwargs)

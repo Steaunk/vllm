@@ -169,7 +169,7 @@ class EngineArgs:
 @dataclass
 class AsyncEngineArgs(EngineArgs):
     """Arguments for asynchronous vLLM engine."""
-    engine_use_ray: bool = False
+    engine_use_ray: bool = True
     disable_log_requests: bool = False
     max_concurrent_steps: int = 1
 
