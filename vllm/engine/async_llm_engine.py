@@ -247,6 +247,14 @@ class AsyncLLMEngine:
                  log_requests: bool = True,
                  start_engine_loop: bool = True,
                  **kwargs) -> None:
+        logger.info(
+            "Initializing an asynchronize LLM engine with config: "
+            f"worker_use_ray={worker_use_ray}, "
+            f"engine_use_ray={engine_use_ray}, "
+            f"max_concurrent_steps={max_concurrent_steps}, "
+            f"log_requests={log_requests}, "
+            f"start_engine_loop={start_engine_loop}")
+
         self.worker_use_ray = worker_use_ray
         assert engine_use_ray is True
         if max_concurrent_steps is None:
