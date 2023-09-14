@@ -243,12 +243,14 @@ class AsyncLLMEngine:
                  worker_use_ray: bool,
                  engine_use_ray: bool,
                  *args,
-                 max_concurrent_steps: int = 1,
+                 max_concurrent_steps: Optional[int] = None,
                  log_requests: bool = True,
                  start_engine_loop: bool = True,
                  **kwargs) -> None:
         self.worker_use_ray = worker_use_ray
         assert engine_use_ray is True
+        if max_concurrent_steps is None:
+            max_concurrent_steps = args[2].pipeline_parallel_size + 1
         self.max_concurrent_steps = max_concurrent_steps
         self.log_requests = log_requests
         self.engine = self._init_engine(*args, **kwargs)
