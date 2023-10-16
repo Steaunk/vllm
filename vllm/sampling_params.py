@@ -90,6 +90,9 @@ class SamplingParams:
         prompt_logprobs: Optional[int] = None,
         skip_special_tokens: bool = True,
     ) -> None:
+        assert n == 1
+        assert best_of is None
+        assert use_beam_search is False
         self.n = n
         self.best_of = best_of if best_of is not None else n
         self.presence_penalty = presence_penalty
