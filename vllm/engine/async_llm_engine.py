@@ -361,7 +361,7 @@ class AsyncLLMEngine:
         max_concurrent_steps = self.max_concurrent_steps
         if max_concurrent_steps is None:
             parallel_config = await self.get_parallel_config()
-            max_concurrent_steps = parallel_config.pipeline_parallel_size + 1
+            max_concurrent_steps = parallel_config.pipeline_parallel_size
 
         futures: Set[asyncio.Future] = set()
         while True:
