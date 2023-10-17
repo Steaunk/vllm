@@ -241,6 +241,7 @@ class SequenceGroup:
         self.seqs_dict = {seq.seq_id: seq for seq in seqs}
         self.sampling_params = sampling_params
         self.arrival_time = arrival_time
+        self.is_executing = False
         self.prompt_logprobs: Optional[PromptLogprobs] = None
 
     @property

@@ -261,7 +261,6 @@ class PagedAttention(nn.Module):
         num_prompt_tokens = input_metadata.num_prompt_tokens
         if num_prompt_tokens > 0:
             # Prompt run.
-            assert input_metadata.num_generation_tokens == 0
             self.set_attn_bias(input_metadata, dtype=query.dtype)
             self.multi_query_kv_attention(
                 output[:num_prompt_tokens],
@@ -300,7 +299,6 @@ class PagedAttention(nn.Module):
 
         if input_metadata.num_generation_tokens > 0:
             # Decoding run.
-            assert input_metadata.num_prompt_tokens == 0
             assert key_cache is not None and value_cache is not None, (
                 "key_cache and value_cache must be provided when "
                 "generating tokens.")
