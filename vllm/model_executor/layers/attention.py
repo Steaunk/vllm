@@ -281,7 +281,6 @@ class PagedAttention(nn.Module):
 
         if input_metadata.num_generation_tokens > 0:
             # Decoding run.
-            assert input_metadata.num_prompt_tokens == 0
             assert key_cache is not None and value_cache is not None, (
                 "key_cache and value_cache must be provided when "
                 "generating tokens.")
