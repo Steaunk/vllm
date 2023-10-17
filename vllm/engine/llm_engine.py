@@ -551,7 +551,7 @@ class LLMEngine:
 
         if self.log_stats:
             # Log the system stats.
-            self._log_system_stats(scheduler_outputs.prompt_run,
+            self._log_system_stats(scheduler_outputs.num_prompts_tokens,
                                    scheduler_outputs.num_batched_tokens)
         return request_outputs
 
@@ -583,15 +583,14 @@ class LLMEngine:
 
     def _log_system_stats(
         self,
-        prompt_run: bool,
+        num_prompts_tokens: bool,
         num_batched_tokens: int,
     ) -> None:
         now = time.monotonic()
         # Log the number of batched input tokens.
-        if prompt_run:
-            self.num_prompt_tokens.append((now, num_batched_tokens))
-        else:
-            self.num_generation_tokens.append((now, num_batched_tokens))
+        self.num_prompt_tokens.append((now, num_prompts_tokens))
+        self.num_generation_tokens.append(
+            (now, num_batched_tokens - num_prompts_tokens))
 
         elapsed_time = now - self.last_logging_time
         if elapsed_time < _LOGGING_INTERVAL_SEC:
