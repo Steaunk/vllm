@@ -16,7 +16,7 @@ import threading
 from fastapi import Request, BackgroundTasks
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, StreamingResponse
+from fastapi.responses import JSONResponse, StreamingResponse, Response
 from packaging import version
 
 from vllm.engine.arg_utils import AsyncEngineArgs
@@ -334,6 +334,12 @@ async def check_length(
     else:
         request.max_tokens = min(request.max_tokens, max_model_len - token_num)
         return input_ids, None
+
+
+@app.get("/health")
+async def health() -> Response:
+    """Health check."""
+    return Response(status_code=200)
 
 
 @app.get("/v1/models")
