@@ -183,12 +183,20 @@ class LlamaDecoderLayer(nn.Module):
             max_position_embeddings=max_position_embeddings,
             quant_config=quant_config,
         )
-        self.mlp = LlamaMLP(
-            hidden_size=self.hidden_size,
-            intermediate_size=config.intermediate_size,
-            hidden_act=config.hidden_act,
-            quant_config=quant_config,
-        )
+        if config.haillm_config is not None and hasattr(
+                config.haillm_config.gpt, "moe"):
+            tp_size = get_tensor_model_parallel_world_size()
+            assert tp_size == 1
+            assert quant_config is None
+            from hai_llm.model.moe_v2.llama import FusedExperts
+            self.mlp = FusedExperts(config.haillm_config.gpt)
+        else:
+            self.mlp = LlamaMLP(
+                hidden_size=self.hidden_size,
+                intermediate_size=config.intermediate_size,
+                hidden_act=config.hidden_act,
+                quant_config=quant_config,
+            )
         self.input_layernorm = RMSNorm(config.hidden_size,
                                        eps=config.rms_norm_eps)
         self.post_attention_layernorm = RMSNorm(config.hidden_size,
